@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Math Module 3 Review</title>
+  <style>
+    body { font-family: "Comic Sans MS", "Comic Neue", Arial, sans-serif; background: #f0f8ff; margin: 0; padding: 0; overflow-x: hidden; }
+    header {
+  background: linear-gradient(90deg, #0074d9, #39c0ed);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative; z-index: 1; }
+    .hidden { display: none; }
+    button { background: #0074d9; color: white; border: none; padding: 10px 15px; margin: 8px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+    button:hover { background: #005fa3; }
+    .feedback { margin-top: 1rem; font-weight: bold; font-size: 1.2rem; }
+    .correct { color: #28a745; } .incorrect { color: #dc3545; }
+    .score { font-size: 1.3rem; margin-top: 1rem; font-weight: bold; }
+    .message { font-size: 1.1rem; margin-top: 0.5rem; font-style: italic; }
+    .progress { font-size: 1rem; margin-bottom: 0.3rem; font-weight: bold; }
+    .progress-bar-container { background: #e0e0e0; border-radius: 10px; overflow: hidden; height: 18px; margin-bottom: 1rem; }
+    .progress-bar { background: linear-gradient(90deg, #39c0ed, #28a745); height: 100%; width: 0%; transition: width 0.4s ease; }
+    #q-image { max-width: 100%; height: auto; display: none; margin: 0 0 10px 0; border: 1px dashed #bcd; border-radius: 10px; padding: 4px; background: #f7fbff; }
+  
+#start-screen { margin-top: 0.2rem; text-align: center; }
+</style>
+</head>
+<body>
+  <header>📘 Math Module 3 Review</header>
+  <canvas id="confetti-canvas"></canvas>
+  <div class="container">
+    <div id="start-screen">
+      <h2>Welcome! Pick a Test Form:</h2>
+      <button onclick="startTest('A')">Form A</button>
+      <button onclick="startTest('B')">Form B</button>
+    </div>
+    <div id="quiz-screen" class="hidden">
+      <p class="progress" id="progress"></p>
+      <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
+      <img id="q-image" alt="Question diagram"/>
+      <h2 id="question-text"></h2>
+      <div id="answers"></div>
+      <div class="feedback" id="feedback"></div>
+      <button id="next-btn" class="hidden" onclick="nextQuestion()">Next Question ➡️</button>
+    </div>
+    <div id="end-screen" class="hidden">
+      <h2>🎉 Test Complete!</h2>
+      <p class="score" id="final-score"></p>
+      <p class="score" id="percent-score"></p>
+      <p class="message" id="performance-message"></p>
+      <button onclick="restart()">🔄 Try Again</button>
+    </div>
+  </div>
+  <audio id="ding-sound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="buzz-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<script>
+const tests = {
+  A: [
+    {q:"Jaime has 30 paper clips. Chris has 5 times as many paper clips as Jaime.\nHow many paper clips does Chris have?", options:["35","120","150","180"], answer:"150", image:"assets/q1-form-a.png"},
+    {q:"The Tigers scored 6 runs in a game. This was 2 times as many runs as the Orioles scored.\nWhich equation shows how many runs r the Orioles scored?", options:["2 × r = 6","2 × 6 = r","6 + 2 = r","2 + r = 6"], answer:"2 × r = 6"},
+    {q:"What number is 3 times as many as 9?", options:["18","21","27","24"], answer:"27"},
+    {q:"A box has 6 times as many pens as markers. The box has 42 pens.\nHow many markers m are in the box?", options:["6","7","36","252"], answer:"7"},
+    {q:"What number is 4 times as many as 6?", options:["24","12","18","36"], answer:"24"},
+    {q:"32 is 8 times as many as 4. Which statement is true?", options:["32 = 7 × 4","32 = 4 × 9","32 = 8 × 3","32 = 8 × 4"], answer:"32 = 8 × 4"},
+    {q:"19 is 2 times as many as 9. Is this statement true or false?", options:["True","False","Sometimes","Not enough information"], answer:"False"},
+    {q:"45 is 9 times as many as 5. Which statement is true?", options:["9 × 5 = 45","9 × 6 = 45","5 × 7 = 45","45 × 9 = 5"], answer:"9 × 5 = 45"},
+    {q:"The first floor of a building has 7 clocks. The entire building has 10 times as many clocks as the first floor.\nHow many clocks are in the entire building?", options:["17","63","70","77"], answer:"70"},
+    {q:"Dara visits an animal shelter and counts 5 cats. She counts 3 times as many dogs as cats.\nHow many more dogs than cats does Dara count?", options:["5","8","15","10"], answer:"10"},
+    {q:"High Street has 5 houses and Mill Street has 35 houses.\nHow many times as many houses are on Mill Street as on High Street?", options:["5","7","6","8"], answer:"7"},
+    {q:"In a game, Rosanna has 6 points. Kara has 9 times as many points as Rosanna.\nHow many points does Kara have?", options:["36","45","54","64"], answer:"54"},
+    {q:"There are 7 times as many cars as trucks in a parking lot.\nIf there are 49 cars, how many trucks are there?", options:["7","6","8","9"], answer:"7"},
+    {q:"Harry sorts trail mix and counts 4 almonds. The mix has 3 times as many raisins as almonds.\nHow many raisins are in the mix?", options:["6","9","15","12"], answer:"12"},
+    {q:"Ben plants 6 tomato seeds. He plants 3 times as many cucumber seeds as tomato seeds.\nHow many cucumber seeds does Ben plant?", options:["12","18","15","20"], answer:"18"},
+    {q:"On Friday, Heather did 40 hops while jumping rope. That is 4 times as many hops as she did on Monday.\nWhich equation can be used to find how many hops h Heather did on Monday?", options:["40 + 4 = h","40 − 4 = h","40 ÷ 4 = h","40 × 4 = h"], answer:"40 ÷ 4 = h"},
+    {q:"Heather did 40 hops on Friday, which is 4 times as many as Monday.\nHow many hops did Heather do on Monday?", options:["10","9","8","12"], answer:"10"}
+  ],
+  B: [
+    {q:"Jeanette has 20 pears. Tara has 4 times as many pears as Jeanette.\nHow many pears does Tara have?", options:["100","60","80","24"], answer:"80", image:"assets/q1-form-b.png"},
+    {q:"There were 32 students running in a race. This was 4 times the total number of teachers running.\nWhich equation shows how many teachers t ran in the race?", options:["32 × 4 = t","4 × t = 32","32 + t = 4","4 + 32 = t"], answer:"4 × t = 32"},
+    {q:"What number is 10 times as many as 5?", options:["15","50","25","10"], answer:"50"},
+    {q:"A parking lot has 8 times as many cars as buses. The parking lot has 72 cars.\nHow many buses are in the parking lot?", options:["9","8","12","64"], answer:"9"},
+    {q:"What number is 5 times as many as 8?", options:["30","35","45","40"], answer:"40"},
+    {q:"Which of the following statements is true?", options:["32 is 7 times as many as 4.","19 is 2 times as many as 9.","24 is 3 times as many as 8.","45 is 9 times as many as 5."], answer:"45 is 9 times as many as 5."},
+    {q:"The top shelf of a bookcase has 8 books. The entire bookcase has 10 times as many books as the top shelf.\nHow many books are in the entire bookcase?", options:["70","80","88","100"], answer:"80"},
+    {q:"Aaron watches a school orchestra perform and counts 4 drums. He counts 5 times as many violins as drums.\nHow many more violins than drums does Aaron count?", options:["12","16","20","24"], answer:"20"},
+    {q:"East Park has 7 trees and West Park has 56 trees.\nHow many times as many trees are in West Park as in East Park?", options:["6","7","8","9"], answer:"8"},
+    {q:"Omar plays 4 rounds of a game. Peter plays 7 times as many rounds as Omar.\nHow many rounds does Peter play?", options:["24","28","30","36"], answer:"28"},
+    {q:"There are 5 times as many birds as squirrels in a tree. If there are 15 birds, how many squirrels are there?", options:["3","4","5","2"], answer:"3"},
+    {q:"Molly is making a bead bracelet. She will use 6 red beads and 2 times as many purple beads as red beads.\nHow many purple beads will Molly use?", options:["8","10","12","14"], answer:"12"},
+    {q:"Gabriel has 4 pencils. Alana has 3 times as many pencils as Gabriel.\nHow many pencils does Alana have?", options:["10","12","14","15"], answer:"12"},
+    {q:"On Monday, David correctly completed 30 multiplication facts in 1 minute. This is 3 times as many facts as he correctly completed last week.\nWhich equation can be used to find how many facts m he correctly completed last week?", options:["30 + 3 = m","30 − 3 = m","30 × 3 = m","30 ÷ 3 = m"], answer:"30 ÷ 3 = m"},
+    {q:"How many multiplication facts did David correctly complete last week?", options:["9","10","12","8"], answer:"10"},
+    {q:"Jasmine planted 8 flowers in her garden. Mia planted 4 times as many flowers as Jasmine.\nHow many flowers did Mia plant?", options:["24","28","32","36"], answer:"32"},
+    {q:"The local zoo has 6 lion cubs. The number of tiger cubs is 5 times the number of lion cubs.\nHow many tiger cubs are there?", options:["25","26","30","35"], answer:"30"}
+  ]
+};
+let currentTest = [];
+let currentIndex = 0;
+let score = 0;
+
+function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+function playSound(type) { (type === "correct" ? document.getElementById("ding-sound") : document.getElementById("buzz-sound")).play(); }
+function startTest(form) {
+  currentTest = JSON.parse(JSON.stringify(tests[form]));
+  currentTest = shuffle(currentTest);
+  currentTest.forEach(q => { q.options = shuffle(q.options); });
+  currentIndex = 0; score = 0;
+  document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("quiz-screen").classList.remove("hidden");
+  showQuestion();
+}
+function showQuestion() {
+  const qObj = currentTest[currentIndex];
+  document.getElementById("progress").innerText = `Question ${currentIndex + 1} of ${currentTest.length}`;
+  const percent = ((currentIndex) / currentTest.length) * 100;
+  document.getElementById("progress-bar").style.width = percent + "%";
+
+  const img = document.getElementById("q-image");
+  if (qObj.image) { img.src = qObj.image; img.style.display = "block"; } else { img.style.display = "none"; }
+
+  document.getElementById("question-text").innerText = qObj.q;
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+  qObj.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.innerText = opt; btn.className = "answer-btn";
+    btn.onclick = () => checkAnswer(opt, qObj.answer, btn);
+    answersDiv.appendChild(btn);
+  });
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("next-btn").classList.add("hidden");
+}
+function checkAnswer(selected, correct, btn) {
+  if (selected === correct) {
+    document.getElementById("feedback").innerText = "✅ Correct!";
+    document.getElementById("feedback").className = "feedback correct";
+    btn.classList.add("correct"); score++; playSound("correct");
+  } else {
+    document.getElementById("feedback").innerText = "❌ Incorrect. Correct answer: " + correct;
+    document.getElementById("feedback").className = "feedback incorrect";
+    btn.classList.add("incorrect"); playSound("incorrect");
+  }
+  Array.from(document.getElementById("answers").children).forEach(b => b.disabled = true);
+  document.getElementById("next-btn").classList.remove("hidden");
+}
+function nextQuestion() { currentIndex++; (currentIndex < currentTest.length) ? showQuestion() : endTest(); }
+function endTest() {
+  document.getElementById("quiz-screen").classList.add("hidden");
+  document.getElementById("end-screen").classList.remove("hidden");
+  const percent = Math.round((score / currentTest.length) * 100);
+  document.getElementById("progress-bar").style.width = "100%";
+  document.getElementById("final-score").innerText = `You scored ${score} out of ${currentTest.length}.`;
+  document.getElementById("percent-score").innerText = `That’s ${percent}%.`;
+  let message = (percent === 100) ? "🌟 Excellent work! Perfect score!" :
+                (percent >= 80) ? "👍 Great job! You really know this material." :
+                (percent >= 60) ? "👌 Not bad! Keep practicing to improve." :
+                "💡 Keep trying! Review the lessons and practice again.";
+  document.getElementById("performance-message").innerText = message;
+  launchConfetti();
+}
+function restart() {
+  document.getElementById("end-screen").classList.add("hidden");
+  document.getElementById("start-screen").classList.remove("hidden");
+  document.getElementById("progress-bar").style.width = "0%";
+}
+function launchConfetti() {
+  const duration = 3 * 1000; const end = Date.now() + duration;
+  (function frame() {
+    confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 } });
+    confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 } });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</body>
+</html>
